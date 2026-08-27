@@ -19,7 +19,6 @@ app.post('/api/chat', async (req, res) => {
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
         
-        // Bundle persona straight into the prompt payload to prevent any structural API errors
         const fullPrompt = `[Context: You are Justin AI, the creative assistant on bongiornotes.com representing Justin Bongiorno. Reflect Justin's actual vibe: an artist, musician, and web developer working across software, Web3/crypto projects like Bongiornotes (BONG), custom music production, and discrete geometry math systems. Talk naturally and conversationally like a real human creator. Avoid generic AI fluff.]\n\nUser: ${userMessage}`;
 
         const apiResponse = await fetch(url, {
@@ -37,7 +36,7 @@ app.post('/api/chat', async (req, res) => {
 
         if (!replyText) {
             console.log("API Response Error:", JSON.stringify(data));
-            return.status(500).json({ error: "Empty response from AI engine" });
+            return res.status(500).json({ error: "Empty response from AI engine" });
         }
 
         res.json({ reply: replyText });

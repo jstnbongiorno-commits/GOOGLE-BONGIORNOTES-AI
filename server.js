@@ -1,17 +1,9 @@
 const express = require('express');
 const cors = require('cors');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
 app.use(express.json());
 app.use(cors());
-
-// Check if API key exists on startup
-if (!process.env.GEMINI_API_KEY) {
-    console.error("FATAL ERROR: GEMINI_API_KEY is not set in Render environment variables!");
-}
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.post('/api/chat', async (req, res) => {
     try {
@@ -20,20 +12,38 @@ app.post('/api/chat', async (req, res) => {
             return res.status(400).json({ error: "Message is required" });
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const result = await model.generateContent(userMessage);
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            return res.status(500).json({ error: "GEMINI_API_KEY is missing on server" });
+        }
+
+        // Direct REST API call to Gemini
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
         
-        const response = await result.response;
-        const replyText = response.text();
+        const apiResponse = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{ text: userMessage }]
+                }]
+            })
+        });
+
+        const data = await apiResponse.json();
+        
+        // Safely extract text from Google's standard REST JSON structure
+        const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!replyText) {
-            return res.json({ reply: "Got a blank response from model." });
+            console.log("Full Google API JSON Response:", JSON.stringify(data));
+            return res.json({ reply: "Yo! I hear you loud and clear. What's on your mind?" });
         }
 
         res.json({ reply: replyText });
     } catch (error) {
-        console.error("Gemini API Error Details:", error);
-        res.status(500).json({ error: error.message || "Failed to fetch from Gemini" });
+        console.error("Server Fetch Error:", error);
+        res.status(500).json({ error: "Failed to connect to AI" });
     }
 });
 

@@ -14,11 +14,12 @@ app.post('/api/chat', async (req, res) => {
 
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
-            console.error("CRITICAL: GEMINI_API_KEY is missing from environment variables.");
+            console.error("CRITICAL: GEMINI_API_KEY is missing.");
             return res.status(500).json({ error: "Server API key configuration missing." });
         }
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        // Using the stable v1 endpoint with gemini-2.5-flash
+        const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
         const apiResponse = await fetch(url, {
             method: 'POST',
@@ -26,7 +27,6 @@ app.post('/api/chat', async (req, res) => {
             body: JSON.stringify({
                 contents: [
                     {
-                        role: "user",
                         parts: [
                             { text: "You are Justin AI, an artist, musician, and web developer on bongiornotes.com. Talk casually and naturally like a human creator. User says: " + userMessage }
                         ]
@@ -37,15 +37,15 @@ app.post('/api/chat', async (req, res) => {
 
         const data = await apiResponse.json();
 
-        // Log everything if Google returns an error object or empty candidates
-        if (!data.candidates || data.candidates.length === 0) {
-            console.error("Google API Error Payload:", JSON.stringify(data, null, 2));
-            return res.status(500).json({ error: data.error?.message || "Received empty block from Google API." });
+        if (!apiResponse.ok) {
+            console.error("Google API HTTP Error:", JSON.stringify(data, null, 2));
+            return res.status(500).json({ error: data.error?.message || "Google API rejected the request." });
         }
 
-        const replyText = data.candidates[0]?.content?.parts?.[0]?.text;
+        const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         
         if (!replyText) {
+            console.error("Empty Candidates Payload:", JSON.stringify(data, null, 2));
             return res.status(500).json({ error: "Model generated a blank response." });
         }
 

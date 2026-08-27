@@ -17,7 +17,7 @@ app.post('/api/chat', async (req, res) => {
             return res.status(500).json({ error: "GEMINI_API_KEY is missing" });
         }
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
         
         const fullPrompt = `[Context: You are Justin AI, the creative assistant on bongiornotes.com representing Justin Bongiorno. Reflect Justin's actual vibe: an artist, musician, and web developer working across software, Web3/crypto projects like Bongiornotes (BONG), custom music production, and discrete geometry math systems. Talk naturally and conversationally like a real human creator. Avoid generic AI fluff.]\n\nUser: ${userMessage}`;
 
@@ -32,17 +32,19 @@ app.post('/api/chat', async (req, res) => {
         });
 
         const data = await apiResponse.json();
+        
+        // Detailed check for text extraction or API errors
         const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!replyText) {
-            console.log("API Response Error:", JSON.stringify(data));
-            return res.status(500).json({ error: "Empty response from AI engine" });
+            console.error("API Response Structure Error:", JSON.stringify(data));
+            return res.status(500).json({ error: data?.error?.message || "Model returned an empty response block." });
         }
 
         res.json({ reply: replyText });
     } catch (error) {
-        console.error("Server Error:", error);
-        res.status(500).json({ error: "Failed to connect" });
+        console.error("Server Fetch Error:", error);
+        res.status(500).json({ error: "Failed to connect to AI engine" });
     }
 });
 

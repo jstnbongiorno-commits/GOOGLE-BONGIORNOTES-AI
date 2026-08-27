@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Initialize Gemini with your environment variable
+// Initialize Gemini using your Render environment variable
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.post('/api/chat', async (req, res) => {
@@ -16,13 +16,16 @@ app.post('/api/chat', async (req, res) => {
             return res.status(400).json({ error: "Message is required" });
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        // Use the stable and fast flash model
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
         const result = await model.generateContent(userMessage);
-        const replyText = result.response.text();
+        const response = await result.response;
+        const replyText = response.text();
         
         res.json({ reply: replyText });
     } catch (error) {
-        console.error("Gemini Error Details:", error);
+        console.error("Gemini Error:", error);
         res.status(500).json({ error: error.message || "Failed to fetch from Gemini" });
     }
 });

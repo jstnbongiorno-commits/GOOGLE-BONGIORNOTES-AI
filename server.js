@@ -19,17 +19,15 @@ app.post('/api/chat', async (req, res) => {
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
         
+        // Bundle persona straight into the prompt payload to prevent any structural API errors
+        const fullPrompt = `[Context: You are Justin AI, the creative assistant on bongiornotes.com representing Justin Bongiorno. Reflect Justin's actual vibe: an artist, musician, and web developer working across software, Web3/crypto projects like Bongiornotes (BONG), custom music production, and discrete geometry math systems. Talk naturally and conversationally like a real human creator. Avoid generic AI fluff.]\n\nUser: ${userMessage}`;
+
         const apiResponse = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                system_instruction: {
-                    parts: [{ 
-                        text: "You are Justin AI, the interactive creative assistant on bongiornotes.com representing Justin Bongiorno. You reflect Justin's vibe: an artist, musician, and web developer working across software, Web3/crypto projects like Bongiornotes (BONG), custom music production, and discrete geometry/taxicab math systems. Talk naturally, creatively, and conversationally like a real human builder and artist. Avoid repetitive robotic catchphrases or generic assistant fluff." 
-                    }]
-                },
                 contents: [{
-                    parts: [{ text: userMessage }]
+                    parts: [{ text: fullPrompt }]
                 }]
             })
         });
@@ -39,7 +37,7 @@ app.post('/api/chat', async (req, res) => {
 
         if (!replyText) {
             console.log("API Response Error:", JSON.stringify(data));
-            return res.json({ reply: "Yo, servers are live. What are we building or writing today?" });
+            return.status(500).json({ error: "Empty response from AI engine" });
         }
 
         res.json({ reply: replyText });

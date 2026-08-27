@@ -17,23 +17,18 @@ app.post('/api/chat', async (req, res) => {
 
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const result = await model.generateContent(userMessage);
-        
-        // Debug log to see what's coming back
-        console.log("Raw Result object:", JSON.stringify(result, null, 2));
 
-        // Try extracting text safely using multiple fallbacks
         let replyText = "";
         try {
             replyText = result.response.text();
         } catch (e) {
-            // Fallback manual extraction if text() helper fails
             if (result.response && result.response.candidates && result.response.candidates[0].content.parts[0].text) {
                 replyText = result.response.candidates[0].content.parts[0].text;
             }
         }
 
         if (!replyText || replyText.trim() === "") {
-            return.json({ reply: "Yo, I'm here! (Received an empty text block from AI)." });
+            return res.json({ reply: "Yo, I'm here! (Received an empty text block from AI)." });
         }
 
         res.json({ reply: replyText });

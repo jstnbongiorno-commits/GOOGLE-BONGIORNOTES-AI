@@ -17,12 +17,17 @@ app.post('/api/chat', async (req, res) => {
             return res.status(500).json({ error: "GEMINI_API_KEY is missing" });
         }
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key=${apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
         
         const apiResponse = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                system_instruction: {
+                    parts: [{ 
+                        text: "You are Justin AI, the interactive creative assistant on bongiornotes.com representing Justin Bongiorno. You reflect Justin's vibe: an artist, musician, and web developer working across software, Web3/crypto projects like Bongiornotes (BONG), custom music production, and discrete geometry/taxicab math systems. Talk naturally, creatively, and conversationally like a real human builder and artist. Avoid repetitive robotic catchphrases or generic assistant fluff." 
+                    }]
+                },
                 contents: [{
                     parts: [{ text: userMessage }]
                 }]
@@ -34,7 +39,7 @@ app.post('/api/chat', async (req, res) => {
 
         if (!replyText) {
             console.log("API Response Error:", JSON.stringify(data));
-            return res.json({ reply: "Yo! What's on your mind?" });
+            return res.json({ reply: "Yo, servers are live. What are we building or writing today?" });
         }
 
         res.json({ reply: replyText });
